@@ -1,19 +1,67 @@
 ---
-title: 'しゃい！！ When to Use Static Generation v.s. Server-side Rendering'
-date: '2020-01-02'
+title: 'github複数アカウントの使い分け'
+date: '2020-10-17'
 ---
 
-We recommend using **Static Generation** (with and without data) whenever possible because your page can be built once and served by CDN, which makes it much faster than having a server render the page on every request.
+① ~/.ssh配下に新ディレクトリ作成
+```
+mkdir ~/.ssh/sasaking
+```
+(sasakingは適当に)
 
-You can use Static Generation for many types of pages, including:
+② ssh-keygenコマンドで鍵を生成 (githubに登録してるメアド)
+```
+ssh-keygen -t rsa -b 4096 -C "your_email@example.com" -f ~/.ssh/sasaking/id_rsa
+```
 
-- Marketing pages
-- Blog posts
-- E-commerce product listings
-- Help and documentation
+③ 確認
+```
+ls ~/.ssh/sasaking
+```
+id_rsaとid_rsa.pubがあればOK
 
-You should ask yourself: "Can I pre-render this page **ahead** of a user's request?" If the answer is yes, then you should choose Static Generation.
+④ 公開鍵をコピー
+```
+pbcopy < ~/.ssh/sasaking/id_rsa.pub
+```
 
-On the other hand, Static Generation is **not** a good idea if you cannot pre-render a page ahead of a user's request. Maybe your page shows frequently updated data, and the page content changes on every request.
+⑤ githubに公開鍵を登録  
+Settings → SSH and GPG keys → New SSH key  
+Titleを適当に入力  
+Keyに④を貼り付け  
+Add SSH Keyをクリック
 
-In that case, you can use **Server-Side Rendering**. It will be slower, but the pre-rendered page will always be up-to-date. Or you can skip pre-rendering and use client-side JavaScript to populate data.
+⑥ アカウント使い分け
+```
+vim ~/.ssh/config
+```
+
+中身に以下を追加
+```
+Host github-sub
+  HostName github.com
+  IdentityFile ~/.ssh/sasaking/id_rsa
+  User git
+  Port 22
+  IdentitiesOnly yes
+```
+
+⑦ 接続確認
+```
+ssh -T github-sub
+```
+↓これが出たら成功
+```
+Hi sasaking! You've successfully authenticated, but GitHub does not provide shell access.
+```
+⑧ リモートリポジトリ確認
+```
+git remote -v
+```
+
+もし違うリポジトリにpushしたいなら、
+```
+git remote rm origin
+git remote add origin git@github-sub:sasaking/next-training.git
+git push -u origin master
+```
